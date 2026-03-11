@@ -2,6 +2,9 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { Pool } from "pg";
+import * as dotenv from "dotenv"
+
+dotenv.config()
 
 const app = express()
 
