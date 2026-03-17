@@ -30,7 +30,3 @@ CREATE TABLE users (
     role VARCHAR(20) DEFAULT 'user'
 
 );
-
-
-INSERT INTO actors (name, type, country_origin) VALUES ('EU Council', 'International Body', 'European Union');
-INSERT INTO actors (name, type, country_origin) VALUES ('Iran Ministry of Foreign Affairs', 'Government', 'Iran');
