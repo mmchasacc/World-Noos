@@ -12,6 +12,7 @@ export function getActorRoutes(pool: Pool) {
   router.get('/', controller.getActors);
   router.post('/', controller.createActor)
   router.delete('/:id', controller.deleteActor)
+  router.put('/:id', controller.updateActor)
 
   return router;
 }
