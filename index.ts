@@ -3,10 +3,12 @@ import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { Pool } from "pg";
 import * as dotenv from "dotenv"
+import { getActorRoutes } from "./src/routes/actorRoutes";
 
 dotenv.config()
 
 const app = express()
+app.use(express.json())
 
 const port = process.env.PORT || 3000
 
@@ -15,8 +17,15 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
 })
 
-app.use(helmet())
-app.use(express.json())
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+            "script-src": ["'self'", "'unsafe-inline'", "cdn.tailwindcss.com"],
+            "script-src-attr": ["'unsafe-inline'"]
+        }
+    }
+}))
 
 const limiter = rateLimit({
     windowMs: 10 * 60 * 1000,
@@ -27,6 +36,8 @@ const limiter = rateLimit({
 app.use(limiter)
 
 app.use(express.static("public"))
+
+app.use('/api/actors', getActorRoutes(pool))
 
 app.get('/api/health', async (req, res) => {
     try {

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>World GeoPol Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+      <header
+        class="flex justify-between items-center mb-8 border-b border-slate-700 pb-6"
+      >
+        <div>
+          <h1
+            class="text-3xl font-bold text-red-500 uppercase tracking-tighter"
+          >
+            World GeoPol Tracker
+          </h1>
+        </div>
+        <div
+          id="statusIndicator"
+          class="px-3 py-1 rounded-full text-xs font-mono bg-red-900/30 text-red-400 border border-red-500/50"
+        >
+        </div>
+      </header>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <section
+          class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-2xl"
+        >
+          <h2 class="text-xl font-bold mb-4 flex items-center">
+            <span class="mr-2">➕</span> Registrera Aktör
+          </h2>
+          <form id="actorForm" class="space-y-4">
+            <input
+              type="text"
+              id="name"
+              placeholder="Namn (t.ex. IRGC, EU)"
+              required
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 outline-none focus:border-red-500 transition"
+            />
+
+            <select
+              id="type"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 outline-none focus:border-red-500"
+            >
+              <option value="Government">Regering / Stat</option>
+              <option value="Military">Militär organisation</option>
+              <option value="International Body">Internationellt organ</option>
+              <option value="NGO">Civil organisation</option>
+            </select>
+
+            <input
+              type="text"
+              id="country"
+              placeholder="Ursprungsland"
+              required
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 outline-none focus:border-red-500"
+            />
+
+            <button
+              type="submit"
+              class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg shadow-lg shadow-red-900/20 transition-all active:scale-95"
+            >
+              Spara i Databasen
+            </button>
+          </form>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-bold mb-4 flex items-center">
+            <span class="mr-2">🌍</span> Aktiva Aktörer
+          </h2>
+          <div id="actorList" class="space-y-4">
+            <p class="text-slate-500 italic">Väntar på data...</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const API_URL = "/api/actors";
+      
+      async function checkHealth() {
+        try {
+          const res = await fetch("/api/health");
+          if (res.ok) {
+            const status = document.getElementById("statusIndicator");
+            status.innerText = "Server: Online";
+            status.classList.replace("bg-red-900/30", "bg-emerald-900/30");
+            status.classList.replace("text-red-400", "text-emerald-400");
+            status.classList.replace(
+              "border-red-500/50",
+              "border-emerald-500/50",
+            );
+          }
+        } catch (e) {
+          console.log("Servern sover fortfarande...");
+        }
+      }
+
+      async function fetchActors() {
+        try {
+          const res = await fetch(API_URL);
+          const actors = await res.json();
+          const list = document.getElementById("actorList");
+
+          if (actors.length === 0) {
+            list.innerHTML =
+              '<p class="text-slate-600">Inga aktörer registrerade än.</p>';
+            return;
+          }
+
+          list.innerHTML = actors
+            .map(
+              (a) => `
+                  <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-red-600 flex justify-between items-center shadow-md">
+                      <div>
+                          <h3 class="font-bold text-lg">${a.name}</h3>
+                          <p class="text-xs text-slate-500 uppercase tracking-widest">${a.type} • ${a.country_origin}</p>
+                      </div>
+                      <button onclick="deleteActor(${a.id})" class="text-slate-500 hover:text-red-500 transition p-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                      </button>
+                  </div>
+              `,
+            )
+            .join("");
+        } catch (err) {
+          console.error("Kunde inte ladda aktörer");
+        }
+      }
+
+      document
+        .getElementById("actorForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const data = {
+            name: document.getElementById("name").value,
+            type: document.getElementById("type").value,
+            country_origin: document.getElementById("country").value,
+          };
+
+          await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+          e.target.reset();
+          fetchActors();
+        });
+
+
+      async function deleteActor(id) {
+        if (!confirm("Radera denna aktör?")) return;
+
+        try {
+          await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+          fetchActors();
+        } catch (err) {
+          console.error("Kunde inte radera:", err);
+        }
+      }
+    </script>
+  </body>
+</html>
