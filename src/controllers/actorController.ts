@@ -59,4 +59,44 @@ export class ActorController {
       res.status(500).json({ error: "Kunde inte radera Aktör" });
     }
   };
+
+  updateActor = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    if (!id) return res.status(400);
+    const parsedId = parseInt(id as string);
+
+    const { name, type, country_origin } = req.body;
+
+    try {
+      const allActors = await this.repo.getAll();
+      const nameExists = allActors.some(
+        (a) => a.name.toLowerCase() === name.toLowerCase && a.id !== id,
+      );
+
+      if (nameExists) {
+        return res
+          .status(409)
+          .json({ error: "Namnet är redan upptaget av en annan aktör" });
+      }
+
+      const updatedActor = await this.repo.update(
+        parsedId,
+        name,
+        type,
+        country_origin,
+      );
+
+      if (!updatedActor) {
+        return res.status(404).json({ error: "Aktören hittades inte" });
+      }
+
+      if (updatedActor) {
+        res
+          .status(200)
+          .json({ message: "Aktören har blivit uppdaterad", updatedActor });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Kunde inte uppdatera aktör" });
+    }
+  };
 }
