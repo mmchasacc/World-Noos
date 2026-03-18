@@ -13,6 +13,21 @@ export class ActorController {
     }
   };
 
+  getActorById = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params
+
+      const actor = await this.repo.getById(id as string)
+
+      if (!actor) {
+        return res.status(404).json({ error: "Aktör hittades inte" })
+      }
+      res.json(actor)
+    } catch (error) {
+      res.status(500).json({ error: "Kunde inte hämta aktör" })
+    }
+  }
+
   createActor = async (req: Request, res: Response) => {
     const { name, type, country_origin } = req.body;
     console.log(req.body);

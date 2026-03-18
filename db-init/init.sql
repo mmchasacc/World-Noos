@@ -30,3 +30,19 @@ CREATE TABLE users (
     role VARCHAR(20) DEFAULT 'user'
 
 );
+
+CREATE TABLE IF NOT EXISTS events (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(150) NOT NULL,
+    description TEXT,
+    location VARCHAR(100),
+    event_date DATE DEFAULT CURRENT_DATE,
+    actor_id INTEGER REFERENCES actors(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    token TEXT NOT NULL,
+    user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

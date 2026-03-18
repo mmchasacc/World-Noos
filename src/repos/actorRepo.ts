@@ -10,6 +10,14 @@ export class ActorRepo {
     return rows;
   }
 
+  async getById(id: string | number) {
+    const { rows } = await this.pool.query(
+      "SELECT * FROM actors WHERE id = $1", [id]
+    )
+
+    return rows[0] || null
+  }
+
   async create(name: string, type: string, country: string) {
     const query =
       "INSERT INTO actors (name, type, country_origin) VALUES ($1, $2, $3) RETURNING *";

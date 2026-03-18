@@ -5,6 +5,7 @@ import { Pool } from "pg";
 import * as dotenv from "dotenv"
 import { getActorRoutes } from "./src/routes/actorRoutes";
 import { AuthController } from "./src/controllers/authController";
+import { getEventRoutes } from "./src/routes/eventRoutes";
 
 dotenv.config()
 
@@ -53,6 +54,7 @@ app.get('/api/health', async (req, res) => {
 
 app.post('/api/auth/register', authController.register)
 app.post('/api/auth/login', authController.login)
+app.use('/api/events', getEventRoutes(pool))
 
 app.listen(port, () => {
     console.log(`Server körs på http://localhost:${port}`)
