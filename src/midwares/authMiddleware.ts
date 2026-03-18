@@ -12,4 +12,4 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
         (req as any).user = user
         next()
     })
-}
+} 
