@@ -18,11 +18,8 @@
             World GeoPol Tracker
           </h1>
         </div>
-        <div
-          id="statusIndicator"
-          class="px-3 py-1 rounded-full text-xs font-mono bg-red-900/30 text-red-400 border border-red-500/50"
-        >
-        </div>
+        <div id="userHeaderInfo" class="text-right w-full">
+    </div>
       </header>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -36,7 +33,7 @@
             <input
               type="text"
               id="name"
-              placeholder="Namn (t.ex. IRGC, EU)"
+              placeholder="Namn (t.ex. NATO, US Navy)"
               required
               class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 outline-none focus:border-red-500 transition"
             />
@@ -106,7 +103,6 @@
       async function fetchActors() {
     const list = document.getElementById("actorList");
     
-    // Visa ett litet "laddar"-meddelande medan vi väntar på fetch
     list.innerHTML = '<p class="text-slate-500 italic text-sm">Hämtar från databasen...</p>';
 
     try {
@@ -146,33 +142,110 @@ document.getElementById('refreshBtn').addEventListener('click', fetchActors);
         .getElementById("actorForm")
         .addEventListener("submit", async (e) => {
           e.preventDefault();
+
+          const token = localStorage.getItem("accessToken")
+
+          if (!token) {
+            alert("Du måste logg ain för att kunna registrera en aktör")
+            window.location.href = "auth.html"
+            return
+          }
+
           const data = {
             name: document.getElementById("name").value,
             type: document.getElementById("type").value,
             country_origin: document.getElementById("country").value,
           };
 
-          await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-          });
+          try {
+            const res = await fetch(API_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              },
+              body: JSON.stringify(data)
+            })
 
-          e.target.reset();
-          fetchActors();
+            if (res.status === 401 || res.status === 403) {
+              alert("Din session har gått ut. Logga in igen")
+              window.location.href = "auth.html"
+              return;
+            }
+
+            if (res.ok) {
+              e.target.reset()
+              fetchActors()
+            } else {
+              const errData = await res.json()
+              alert(errData.error || "Kunde inte spara aktören")
+            }
+          } catch (err) {
+            console.error("Fel vid sparande:", err)
+          }
         });
 
 
-      async function deleteActor(id) {
-        if (!confirm("Radera denna aktör?")) return;
+async function deleteActor(id) {
+  if (!confirm("Radera denna aktör?")) return;
 
-        try {
-          await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-          fetchActors();
-        } catch (err) {
-          console.error("Kunde inte radera:", err);
-        }
+  const token = localStorage.getItem("accessToken");
+
+  if (!token) {
+    alert("Du måste logga in för att radera aktörer.");
+    window.location.href = "auth.html";
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${token}`
       }
+    });
+
+    if (res.status === 401 || res.status === 403) {
+      alert("Din session har gått ut. Logga in igen.");
+      window.location.href = "auth.html";
+      return;
+    }
+
+    if (res.ok) {
+      fetchActors();
+    }
+  } catch (err) {
+    console.error("Kunde inte radera:", err);
+  }
+}
+
+      function checkLoginStatus() {
+    const token = localStorage.getItem('accessToken');
+    const username = localStorage.getItem('username');
+    const container = document.getElementById('userHeaderInfo');
+
+    if (token) {
+        container.innerHTML = `
+            <span class="text-slate-400 text-sm">Inloggad som: <b class="text-red-400">${username}</b></span>
+            <button onclick="logout()" class="ml-4 text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1 rounded">Logga ut</button>
+        `;
+    } else {
+        container.innerHTML = `
+            <a href="auth.html" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition">
+                Logga in / Skapa konto
+            </a>
+        `;
+    }
+}
+
+function logout() {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('username');
+    checkLoginStatus();
+    location.reload();
+}
+
+checkLoginStatus();
     </script>
   </body>
 </html>

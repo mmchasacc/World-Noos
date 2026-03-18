@@ -10,9 +10,9 @@ export function getActorRoutes(pool: Pool) {
   const controller = new ActorController(repo);
 
   router.get('/', controller.getActors);
-  router.post('/', controller.createActor)
-  router.delete('/:id', controller.deleteActor)
-  router.put('/:id', controller.updateActor)
+  router.post('/', authenticateToken, controller.createActor)
+  router.delete('/:id', authenticateToken, controller.deleteActor)
+  router.put('/:id', authenticateToken, controller.updateActor)
 
   return router;
 }
