@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World GeoPol - Logga in</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+    
+    <div class="max-w-md w-full bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-2xl font-bold text-red-500 uppercase tracking-tight">System Access</h1>
+            <p class="text-slate-400 text-sm mt-2">Logga in eller skapa ett konto för att utföra ändringar</p>
+        </header>
+
+        <div id="authSection">
+            <div id="authForms">
+                <div class="flex gap-6 mb-6 border-b border-slate-700 pb-2">
+                    <button onclick="toggleAuthMode('login')" id="loginTab" class="text-red-500 font-bold border-b-2 border-red-500 pb-2 transition-all">Logga in</button>
+                    <button onclick="toggleAuthMode('register')" id="registerTab" class="text-slate-400 hover:text-slate-200 pb-2 transition-all">Skapa konto</button>
+                </div>
+                
+                <form id="authForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-slate-500 mb-1 ml-1">Användarnamn</label>
+                        <input type="text" id="authUsername" placeholder="Namn" required 
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 outline-none focus:border-red-500 transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-slate-500 mb-1 ml-1">Lösenord</label>
+                        <input type="password" id="authPassword" placeholder="••••••••" required 
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 outline-none focus:border-red-500 transition">
+                    </div>
+                    
+                    <button type="submit" id="authSubmitBtn" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-lg shadow-lg transition-all active:scale-95 mt-2">
+                        Logga in
+                    </button>
+                </form>
+            </div>
+
+            <div id="userInfo" class="hidden text-center space-y-4">
+                <p class="text-slate-300">Din session har gått ut som <span id="currentUserName" class="text-red-400 font-bold"></span></p>
+                <div class="flex flex-col gap-2">
+                    <button onclick="logout()" class="w-full bg-slate-700 hover:bg-slate-600 py-2 rounded-lg transition">Logga in igen</button>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-8 text-center">
+            <a href="index.html" class="text-slate-500 hover:text-slate-300 text-sm transition flex items-center justify-center gap-2">
+                ← Avbryt och gå tillbaka
+            </a>
+        </footer>
+    </div>
+
+    <script>
+        let authMode = 'login';
+
+        function toggleAuthMode(mode) {
+            authMode = mode;
+            const btn = document.getElementById('authSubmitBtn');
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+
+            if (mode === 'login') {
+                btn.innerText = 'Logga in';
+                loginTab.className = 'text-red-500 font-bold border-b-2 border-red-500 pb-2 transition-all';
+                registerTab.className = 'text-slate-400 hover:text-slate-200 pb-2 transition-all';
+            } else {
+                btn.innerText = 'Skapa konto';
+                registerTab.className = 'text-red-500 font-bold border-b-2 border-red-500 pb-2 transition-all';
+                loginTab.className = 'text-slate-400 hover:text-slate-200 pb-2 transition-all';
+            }
+        }
+
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('authUsername').value;
+            const password = document.getElementById('authPassword').value;
+            const endpoint = authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Något gick fel');
+
+                if (authMode === 'login') {
+                    localStorage.setItem('accessToken', data.accessToken);
+                    localStorage.setItem('refreshToken', data.refreshToken)
+                    localStorage.setItem('username', username);
+
+                    window.location.href = 'index.html'; 
+                } else {
+                    alert("Konto skapat! Logga in nu.");
+                    toggleAuthMode('login');
+                    document.getElementById('authPassword').value = '';
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+
+        function updateAuthUI() {
+            const token = localStorage.getItem('accessToken');
+            const username = localStorage.getItem('username');
+            const authForms = document.getElementById('authForms');
+            const userInfo = document.getElementById('userInfo');
+
+            if (token) {
+                authForms.classList.add('hidden');
+                userInfo.classList.remove('hidden');
+                document.getElementById('currentUserName').innerText = username;
+            } else {
+                authForms.classList.remove('hidden');
+                userInfo.classList.add('hidden');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('username');
+            updateAuthUI();
+        }
+
+        updateAuthUI();
+    </script>
+</body>
+</html>

@@ -5,9 +5,9 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     const authHeader = req.headers['authorization']
     const token = authHeader && authHeader.split(' ')[1]
 
-    if (!token) return res.status(401).json({ error: "Token saknas" })
+    if (!token) return res.status(401).json({ error: "Token saknas, du måste logga in." })
 
-    jwt.verify(token, process.env.JWT_SECRET!, (err: any, user: any) => {
+    jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET!, (err: any, user: any) => {
         if (err) return res.status(403).json({ error: "Ogiltig Token" });
         (req as any).user = user
         next()

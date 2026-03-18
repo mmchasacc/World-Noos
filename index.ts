@@ -4,6 +4,7 @@ import helmet from "helmet";
 import { Pool } from "pg";
 import * as dotenv from "dotenv"
 import { getActorRoutes } from "./src/routes/actorRoutes";
+import { AuthController } from "./src/controllers/authController";
 
 dotenv.config()
 
@@ -27,6 +28,8 @@ app.use(helmet({
     }
 }))
 
+const authController = new AuthController(pool)
+
 const limiter = rateLimit({
     windowMs: 10 * 60 * 1000,
     max: 100,
@@ -47,6 +50,9 @@ app.get('/api/health', async (req, res) => {
         res.status(500).json({ status: "Error", message: "Databasfel"})
     }
 })
+
+app.post('/api/auth/register', authController.register)
+app.post('/api/auth/login', authController.login)
 
 app.listen(port, () => {
     console.log(`Server körs på http://localhost:${port}`)
