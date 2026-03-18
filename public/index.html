@@ -68,15 +68,18 @@
           </form>
         </section>
 
-        <section>
-          <h2 class="text-xl font-bold mb-4 flex items-center">
-            <span class="mr-2">🌍</span> Aktiva Aktörer
-          </h2>
-          <div id="actorList" class="space-y-4">
-            <p class="text-slate-500 italic">Väntar på data...</p>
-          </div>
-        </section>
-      </div>
+       <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-bold flex items-center">
+        <span class="mr-2">🌍</span> Aktiva Aktörer
+    </h2>
+    <button id="refreshBtn" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1 rounded transition flex items-center gap-1">
+        <span>🔄</span> Uppdatera lista
+    </button>
+</div>
+
+<div id="actorList" class="space-y-4">
+    <p class="text-slate-500 italic text-sm">Ingen data...</p>
+</div>
     </div>
 
     <script>
@@ -101,38 +104,43 @@
       }
 
       async function fetchActors() {
-        try {
-          const res = await fetch(API_URL);
-          const actors = await res.json();
-          const list = document.getElementById("actorList");
+    const list = document.getElementById("actorList");
+    
+    // Visa ett litet "laddar"-meddelande medan vi väntar på fetch
+    list.innerHTML = '<p class="text-slate-500 italic text-sm">Hämtar från databasen...</p>';
 
-          if (actors.length === 0) {
-            list.innerHTML =
-              '<p class="text-slate-600">Inga aktörer registrerade än.</p>';
+    try {
+        const res = await fetch(API_URL);
+        const actors = await res.json();
+
+        if (actors.length === 0) {
+            list.innerHTML = '<p class="text-slate-600">Inga aktörer registrerade än.</p>';
             return;
-          }
-
-          list.innerHTML = actors
-            .map(
-              (a) => `
-                  <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-red-600 flex justify-between items-center shadow-md">
-                      <div>
-                          <h3 class="font-bold text-lg">${a.name}</h3>
-                          <p class="text-xs text-slate-500 uppercase tracking-widest">${a.type} • ${a.country_origin}</p>
-                      </div>
-                      <button onclick="deleteActor(${a.id})" class="text-slate-500 hover:text-red-500 transition p-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                      </button>
-                  </div>
-              `,
-            )
-            .join("");
-        } catch (err) {
-          console.error("Kunde inte ladda aktörer");
         }
-      }
+
+        list.innerHTML = actors.map(a => `
+            <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-red-600 flex justify-between items-center shadow-md">
+                <div>
+                    <h3 class="font-bold text-lg">${a.name}</h3>
+                    <p class="text-xs text-slate-500 uppercase tracking-widest">${a.type} • ${a.country_origin}</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="deleteActor(${a.id})" class="text-slate-500 hover:text-red-500 transition p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        `).join("");
+    } catch (err) {
+        list.innerHTML = '<p class="text-red-500">Kunde inte kontakta servern.</p>';
+        console.error("Kunde inte ladda aktörer:", err);
+    }
+}
+document.addEventListener('DOMContentLoaded', fetchActors);
+
+document.getElementById('refreshBtn').addEventListener('click', fetchActors);
 
       document
         .getElementById("actorForm")
